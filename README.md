@@ -27,21 +27,49 @@ really a list containing a function to
 3.  set the value of the mean
 4.  get the value of the mean
 
-<!-- -->
+# Step 1: makeVector function to create the special "vector" object
+makeVector <- function(x = numeric()) {
+  # Initialize the cached mean to NULL
+  mean_val <- NULL
+  
+  # Define the set and get functions for the vector
+  set <- function(y) {
+    x <<- y
+    mean_val <<- NULL  # Clear the cached mean when the vector changes
+  }
+  
+  get <- function() x
+  
+  # Define the set and get functions for the mean
+  setmean <- function(mean) mean_val <<- mean
+  getmean <- function() mean_val
+  
+  # Return a list of these functions
+  list(set = set, get = get, setmean = setmean, getmean = getmean)
+}
 
-    makeVector <- function(x = numeric()) {
-            m <- NULL
-            set <- function(y) {
-                    x <<- y
-                    m <<- NULL
-            }
-            get <- function() x
-            setmean <- function(mean) m <<- mean
-            getmean <- function() m
-            list(set = set, get = get,
-                 setmean = setmean,
-                 getmean = getmean)
-    }
+# Step 2: cacheMean function to compute and cache the mean
+cacheMean <- function(x, ...) {
+  # Check if the mean is already cached
+  mean_val <- x$getmean()
+  
+  if (!is.null(mean_val)) {
+    # If cached mean exists, return it
+    message("getting cached mean")
+    return(mean_val)
+  }
+  
+  # If no cached mean, calculate the mean
+  data <- x$get()
+  mean_val <- mean(data, ...)
+  
+  # Cache the calculated mean
+  x$setmean(mean_val)
+  
+  # Return the calculated mean
+  mean_val
+}
+
 
 The following function calculates the mean of the special "vector"
 created with the above function. However, it first checks to see if the
@@ -50,17 +78,15 @@ cache and skips the computation. Otherwise, it calculates the mean of
 the data and sets the value of the mean in the cache via the `setmean`
 function.
 
-    cachemean <- function(x, ...) {
-            m <- x$getmean()
-            if(!is.null(m)) {
-                    message("getting cached data")
-                    return(m)
-            }
-            data <- x$get()
-            m <- mean(data, ...)
-            x$setmean(m)
-            m
-    }
+   # Create the special vector object
+special_vector <- makeVector(c(1, 2, 3, 4, 5))
+
+# First time computing mean (will not be cached)
+cacheMean(special_vector)  # This will compute and cache the mean
+
+# Second time computing mean (will use cached value)
+cacheMean(special_vector)  # This will return the cached mean
+
 
 ### Assignment: Caching the Inverse of a Matrix
 
